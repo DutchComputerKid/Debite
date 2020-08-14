@@ -22,7 +22,7 @@ Running with -help will allow you to easily get a list of software.
 By using this, pick associated number in the list and add it to your commnd line to start installing in a one-liner!
 
 ## Software/utils list:
-```
+
 * 1 Add all extra repositories (Will add non-free and contrib via seperated list files.)
 * 2 Console-related tools (Most-used utils that are all pure command line.)
 * 3 "LXDE Setup
@@ -47,7 +47,7 @@ By using this, pick associated number in the list and add it to your commnd line
 * 22 Google Chrome
 * 23 XRDP + Sound support (Might, might not work with your DE)
 * 24 "MakeMKV (NOT UNATTENDED DUE TO EULA)
-```
+
 
 ### Notes:
 

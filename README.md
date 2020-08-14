@@ -48,8 +48,12 @@ By using this, pick associated number in the list and add it to your commnd line
 * 23 XRDP + Sound support (Might, might not work with your DE)
 * 24 "MakeMKV (NOT UNATTENDED DUE TO EULA)
 
+### Screenshots:
 
-### Notes:
+![Help Screenshot](/Screenshots/help.png?raw=true "Help")
+![Text User Interface Screenshot](/Screenshots/tui.png?raw=true "Text User Interface")
+
+#### Notes:
 
 Modify as much as you want to your needs, do feel free!
 If any issues occour or you spot something else that's wrong or could be imposed, do tell!

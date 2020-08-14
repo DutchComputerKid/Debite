@@ -1,7 +1,7 @@
 # Debite
 Debite: A full text-based Ninite clone for (latest) Debian
 
-Welcome! This is Debite, a Ninte clone for setting up Debian systems unattended.
+Welcome! This is Debite, a Ninite clone for setting up Debian systems unattended.
 Runs via a dialog-based text user interface, or directly via the commandline!
 
 ## Installation

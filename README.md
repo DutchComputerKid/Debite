@@ -25,7 +25,7 @@ By using this, pick associated number in the list and add it to your commnd line
 
 * 1 Add all extra repositories (Will add non-free and contrib via seperated list files.)
 * 2 Console-related tools (Most-used utils that are all pure command line.)
-* 3 "LXDE Setup
+* 3 LXDE Setup
 * 4 LXQt Setup
 * 5 GUI-driven software
 * 6 nVidia Driver (latest stable)

@@ -46,7 +46,7 @@ By using this, pick associated number in the list and add it to your commnd line
 * 21 Steam
 * 22 Google Chrome
 * 23 XRDP + Sound support (Might, might not work with your DE)
-* 24 "MakeMKV (NOT UNATTENDED DUE TO EULA)
+* 24 MakeMKV (NOT UNATTENDED DUE TO EULA)
 
 ### Screenshots:
 

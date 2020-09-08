@@ -595,8 +595,8 @@ installers() {
             #Start building
             cd makemkv-oss-$MakeMKVVersion/
             ./configure 2>/dev/null
-            make -s
-            make install -s
+            make -s 2>/dev/null
+            make install -s 2>/dev/null
             cd ..
             cd makemkv-bin-$MakeMKVVersion
             #Will ask for user input!

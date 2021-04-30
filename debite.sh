@@ -579,7 +579,7 @@ installers() {
                 fi
             ;;
             24)
-                MakeMKVVersion="1.15.3"
+                MakeMKVVersion="1.16.3"
                 if [ -f "/usr/bin/makemkv" ]; then
                     printf "${GREEN}Notice: ${NC}MakeMKV itself seems to be installed already: forcing update...\n"
                 fi

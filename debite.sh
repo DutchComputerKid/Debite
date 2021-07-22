@@ -2,7 +2,7 @@
 
 # By Quintus Snitjer, built over a LONG time of tweaking and improving server needs.
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.4\033[0m\n"
+echo -en "\033[1;34mVersion: 0.5\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
@@ -19,7 +19,7 @@ YELLOW='\033[1m\033[33m'
 MAGENTA='\033[1m\033[35m'
 
 #List of available software
-declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Subsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "RubyRipper 0.6.2")
+declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Subsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "RubyRipper")
 # Display help first if desired
 if [[ $@ == *"-help"* ]]; then
     printf "${GREEN}Help: ${NC}Debite can either run via dialog, or command line. \n"
@@ -97,7 +97,7 @@ textmenu() { #Test user interface, in case you dont use the command line options
         22 "Google Chrome" off
         23 "XRDP + Sound support" off
         24 "MakeMKV (NOT UNATTENDED)" off
-    25 "RubyRipper 0.6.2" off)
+        25 "RubyRipper" off)
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do
@@ -345,15 +345,16 @@ installers() {
             ;;
             15)
                 #Check if the required bin has been installed already or is located.
-                if [ -f "/opt/minecraft-launcher/minecraft-launcher" ]; then
+                if [ -f "/usr/bin/minecraft-launcher" ]; then
                     printf "${GREEN}Notice: ${NC}Minecraft has already been installed." && printf "\n"
                 else
                     printf "${GREEN}Running: ${NC}Minecraft\n"
-                    wget -q -O $scriptdl/minecraft.deb https://launcher.mojang.com/download/Minecraft.deb 2>/dev/null
-                    dpkg --force-confold --force-confdef -i $scriptdl/minecraft.deb &>/dev/null
+                    cd $scriptdl
+                    wget -q -O minecraft.deb https://launcher.mojang.com/download/Minecraft.deb 2>/dev/null
+                    dpkg --force-confold --force-confdef -i minecraft.deb &>/dev/null
                     cd $cwd
                     #Then, see if it exists again and if so, give feedback.
-                    if [ -f "/opt/minecraft-launcher/minecraft-launcher" ]; then
+                    if [ -f "/usr/bin/minecraft-launcher" ]; then
                         printf "${GREEN}Success: ${NC}Minecraft installation complete.\n"
                     else
                         printf "${RED} Notice: ${NC}Could not detect the minecraft binary, something went wrong!.\n"
@@ -433,16 +434,17 @@ installers() {
             18)
                 printf "${GREEN}Running: ${NC}SkypeForLinux\n"
                 #Check for / install the skypeforlinux repo.
-                if [ -f "/etc/apt/sources.list.d/skype-stable.list" ]; then
-                    printf "${MAGENTA}Notice: ${NC}Skype repo has already been installed." && printf "\n"
+                if [ -f "/usr/bin/skypeforlinux" ]; then
+                    printf "${MAGENTA}Notice: ${NC}Skype has already been installed." && printf "\n"
                 else
-                    debconf-apt-progress -- apt-get -qq -y install apt-transport-https curl
-                    curl https://repo.skype.com/data/SKYPE-GPG-KEY | apt-key add -
-                    #echo "deb https://repo.skype.com/deb stable main" | tee /etc/apt/sources.list.d/skypeforlinux.list
+                    cd $scriptdl
+                    wget -L -q -O skype.deb https://go.skype.com/skypeforlinux-64.deb
+                    dpkg --force-confold --force-confdef -i skype.deb &>/dev/null
                 fi
-                apt -qq -y update
-                #install skype!
-                debconf-apt-progress -- apt -qq -y install skypeforlinux
+                if [ -f "/usr/bin/skypeforlinux" ]; then
+                    printf "${GREEN}Success: ${NC}Microsoft Skype installation complete.\n"
+                fi
+                #Done
             ;;
             19)
                 #Microsoft teams DEB installer
@@ -466,7 +468,7 @@ installers() {
                 fi
             ;;
             20)
-                #Microsoft teams DEB installer
+                #TeamViewer Installer
                 if [ -f "/usr/bin/teamviewer" ]; then
                     printf "${GREEN}Notice: ${NC}TeamViewer has already been installed." && printf "\n"
                 else
@@ -500,16 +502,20 @@ installers() {
                         echo "deb http://http.debian.net/debian $DEBIAN_RELEASE non-free" >>/etc/apt/sources.list.d/nonfree.list
                         echo "deb-src http://http.debian.net/debian $DEBIAN_RELEASE non-free" >>/etc/apt/sources.list.d/nonfree.list
                     fi
+                    #Add i386 support
+                    dpkg --add-architecture i386
                     #Update stuffs
                     debconf-apt-progress -- apt update
                     #Install Steam
                     debconf-apt-progress -- apt install -y steam
+                    #Add Vulkan if missing
+                    debconf-apt-progress -- apt install -y mesa-vulkan-drivers libglx-mesa0:i386 mesa-vulkan-drivers:i386 libgl1-mesa-dri:i386
                     #Just in case, check for and fix missing libraries: Sometimes the repos are messed up and steam will be missing a buttton of libraries.
                     debconf-apt-progress -- apt-get install -qq -y --fix-broken -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" 2>/dev/null
                     if [ -f "/usr/games/steam" ]; then
                         printf "${GREEN}Success: ${NC}Steam installation complete.\n"
                     else
-                        printf "${RED} Notice: ${NC}Could not detect the steam binary, some libraries might me missing.\n"
+                        printf "${RED} Notice: ${NC}Could not detect the steam binary, some libraries might be missing.\n"
                     fi
                 fi
             ;;
@@ -579,12 +585,12 @@ installers() {
                 fi
             ;;
             24)
-                MakeMKVVersion="1.16.3"
+                MakeMKVVersion="1.16.4"
                 if [ -f "/usr/bin/makemkv" ]; then
                     printf "${GREEN}Notice: ${NC}MakeMKV itself seems to be installed already: forcing update...\n"
                 fi
                 cd $scriptdl
-                printf "${GREEN}Notice: ${NC}Buildiing MakeMKV v$MakeMKVVersion. \n"
+                printf "${GREEN}Notice: ${NC}Building MakeMKV v$MakeMKVVersion. \n"
                 #Download source
                 wget -q https://www.makemkv.com/download/makemkv-bin-$MakeMKVVersion.tar.gz 2>/dev/null
                 wget -q https://www.makemkv.com/download/makemkv-oss-$MakeMKVVersion.tar.gz 2>/dev/null
@@ -618,21 +624,19 @@ installers() {
                 cd $cwd
             ;;
             25)
-                if [[ -f /usr/local/bin/rrip_gui && -f /usr/local/bin/rrip_cli ]]; then
+                if [[ -f  /usr/bin/rrip_cli && -f /usr/bin/rrip_gui ]]; then
                     printf "${GREEN}Notice: ${NC}RubyRipper has already been installed." && printf "\n"
                 else
                     cd $scriptdl
                     #Install requiresites
-                    debconf-apt-progress -- sudo apt -qq -y install cd-discid cdparanoia flac lame normalize-audio ruby-gnome2 ruby vorbisgain cd-discid ruby-gettext ruby-gtk2
-                    #Download latest source
-                    wget -q https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/rubyripper/rubyripper-0.6.2.tar.bz2 2>/dev/null
-                    #Unpack & enter
-                    tar -xjf rubyripper-0.6.2.tar.bz2
-                    cd rubyripper-0.6.2
+                    debconf-apt-progress -- sudo apt -y install cd-discid cdparanoia flac lame normalize-audio ruby-gnome2 ruby vorbisgain cd-discid ruby-gettext ruby-gtk3 sox cdrdao
+                    #Download latest from source
+                    git clone https://github.com/bleskodev/rubyripper 2>/dev/null
+                    cd rubyripper 
                     #Build from source, install to system.
-                    ./configure --enable-lang-all --enable-gtk2 --enable-cli 2>/dev/null
-                    sudo make install -s 2>/dev/null
-                    if [[ -f /usr/local/bin/rrip_gui && -f /usr/local/bin/rrip_cli ]]; then
+                    ./configure --enable-lang-all --enable-gtk3 --enable-cli --prefix=/usr 2>/dev/null
+                    make install -s 2>/dev/null
+                    if [[ -f /usr/bin/rrip_cli && -f /usr/bin/rrip_gui ]]; then
                         printf "${GREEN}RubyRipper: ${NC}scripts detected! Installation complete.\n"
                     else
                         printf "${RED}Notice: ${NC}Could not detect the one or both of the RubyRipper scripts, something might have gone wrong. \n"

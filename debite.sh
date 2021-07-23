@@ -2,7 +2,7 @@
 
 # By Quintus Snitjer, built over a LONG time of tweaking and improving server needs.
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.5\033[0m\n"
+echo -en "\033[1;34mVersion: 0.5.1\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
@@ -19,7 +19,7 @@ YELLOW='\033[1m\033[33m'
 MAGENTA='\033[1m\033[35m'
 
 #List of available software
-declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Subsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "RubyRipper")
+declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Subsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "RubyRipper" "Pale Moon")
 # Display help first if desired
 if [[ $@ == *"-help"* ]]; then
     printf "${GREEN}Help: ${NC}Debite can either run via dialog, or command line. \n"
@@ -97,7 +97,8 @@ textmenu() { #Test user interface, in case you dont use the command line options
         22 "Google Chrome" off
         23 "XRDP + Sound support" off
         24 "MakeMKV (NOT UNATTENDED)" off
-        25 "RubyRipper" off)
+        25 "RubyRipper" off
+        26 "Pale Moon" off)
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do
@@ -644,6 +645,23 @@ installers() {
                 fi
                 cd $cwd
             ;;
+            26)            
+                #Check if the user has Pale Moon installed already
+                if [[ -f /usr/bin/palemoon ]]; then
+                    printf "${GREEN}Notice: ${NC}Pale Moon has already been installed." && printf "\n"
+                else
+                    #Check if the repository was installed already
+                    if [[ -f /etc/apt/sources.list.d/home:stevenpusser.list ]]; then
+                        printf "${GREEN}Notice: ${NC}Pale Moon Repository has already been installed: skipping." && printf "\n"
+                    else
+                        echo 'deb http://download.opensuse.org/repositories/home:/stevenpusser/Debian_10/ /' | sudo tee /etc/apt/sources.list.d/home:stevenpusser.list
+                        curl -fsSL https://download.opensuse.org/repositories/home:stevenpusser/Debian_10/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/home_stevenpusser.gpg > /dev/null 2>/dev/null
+                        apt update 2>/dev/null
+                    fi
+                    #Install Pale Moon
+                    debconf-apt-progress -- apt install -y palemoon
+                fi
+            ;;
         esac
     done
 }
@@ -667,7 +685,7 @@ else
     #If not, continue.
     #Check if an user is inputting values that exceed the program count, but not if help is found in the arguments.
     for args in ${@//[!0-9]/}; do
-        if [ $args -ge 26 ]; then
+        if [ $args -ge 27 ]; then
             echo "A number in the arguments was greater then the amount of scripted tools or programs. Please check with --help" && printf "\n"
             printf "${MAGENTA}Notice: ${NC} '[: --help: integer expression expected' is a known error, you may ignore it. \n"
             if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n" && exit

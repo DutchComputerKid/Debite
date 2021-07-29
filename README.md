@@ -58,5 +58,5 @@ By using this, pick associated number in the list and add it to your commnd line
 #### Notes:
 
 Modify as much as you want to your needs, do feel free!
-If any issues occour or you spot something else that's wrong or could be imposed, do tell!
+If any issues occour or you spot something else that's wrong or could be improved, do tell!
 

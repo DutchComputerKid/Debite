@@ -49,6 +49,7 @@ By using this, pick associated number in the list and add it to your commnd line
 * 24 MakeMKV (NOT UNATTENDED DUE TO EULA)
 * 25 RubyRipper
 * 26 Pale Moon
+* 27 Stacer
 
 ### Screenshots:
 

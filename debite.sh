@@ -2,10 +2,18 @@
 
 # By Quintus Snitjer, built over a LONG time of tweaking and improving server needs.
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.5.1\033[0m\n"
+echo -en "\033[1;34mVersion: 0.5.2\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
+    if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n"
+    exit
+fi
+
+#Check if the user is running Debian 11, if so continue.
+VERSION=$(sed 's/\..*//' /etc/debian_version)
+if [[ $VERSION != *"11"* ]]; then
+    echo "This script is purely designed for Debian 11!"
     if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n"
     exit
 fi
@@ -47,7 +55,13 @@ fi
 if [ ! -e /usr/bin/dialog ]; then
     clear
     echo -e "Installing dependencies to run the installer program..."
-    apt -qq install dialog >/dev/null 2>&1
+    apt -qqy install dialog gpg git >/dev/null 2>&1
+fi
+
+if [ ! -e /usr/bin/gpg ]; then
+    clear
+    echo -e "Installing gpg to allow for keys..."
+    apt -qqy install gpg >/dev/null 2>&1
 fi
 
 # Set up a working directory
@@ -77,6 +91,7 @@ textmenu() { #Test user interface, in case you dont use the command line options
     cmd=(dialog --title "[ Software Installer ]" --separate-output --checklist "Select options:" 22 76 16)
     options=(1 "Add all extra repositories" off # any option can be set to default to "on"
         2 "Console-related tools" off
+
         3 "LXDE Setup" off
         4 "LXQt Setup" off
         5 "GUI-driven software" off
@@ -262,6 +277,13 @@ installers() {
                 else
                     printf "${GREEN}Running: ${NC}Discord\n"
                     cd $scriptdl
+                    #Required in Debian 11
+                    wget http://ftp.de.debian.org/debian/pool/main/libi/libindicator/libindicator7_0.5.0-4_amd64.deb
+                    wget http://ftp.de.debian.org/debian/pool/main/liba/libappindicator/libappindicator1_0.4.92-8_amd64.de
+                    sudo dpkg -i libindicator7_0.5.0-4_amd64.deb
+                    sudo dpkg -i libappindicator1_0.4.92-8_amd64.deb
+                    sudo apt --fix-broken install
+                    #Begin install
                     wget -q -O discordapp.deb "https://discordapp.com/api/download?platform=linux&format=deb" 2>/dev/null
                     sudo dpkg --force-confold --force-confdef -i discordapp.deb 2>/dev/null
                     apt-get install -qq -y --fix-broken -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" 2>/dev/null
@@ -315,7 +337,7 @@ installers() {
                 else
                     printf "${GREEN}Running: ${NC}DeaDBeeF\n"
                     cd $scriptdl
-                    wget -q -O $scriptdl/deadbeef.deb "https://sourceforge.net/projects/deadbeef/files/travis/linux/1.8.1/deadbeef-static_1.8.1-1_amd64.deb/download" 2>/dev/null
+                    wget -q -O $scriptdl/deadbeef.deb "https://sourceforge.net/projects/deadbeef/files/travis/linux/1.8.8/deadbeef-static_1.8.8-1_amd64.deb/download" 2>/dev/null
                     #The DPKG will install, but fail due to missing dependencies.
                     dpkg --force-confold --force-confdef -i $scriptdl/deadbeef.deb &>/dev/null
                     #Thus, an apt-get with --fix-broken is used to correct this and set it up correctly.
@@ -529,7 +551,9 @@ installers() {
                     printf "${GREEN}Notice: ${NC}Google Chrome has already been installed." && printf "\n"
                 else
                     printf "${GREEN}Running: ${NC}Google Chrome \n"
-                    cd $scriptdl
+                    cd $scriptdl         
+                    #Add Key
+                    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
                     #Download latest DEB
                     printf "${GREEN}Notice: ${NC}Downloading, might take a while..." && printf "\n"
                     wget -q -O chrome.deb "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" 2>/dev/null
@@ -633,13 +657,13 @@ installers() {
                 else
                     cd $scriptdl
                     #Install requiresites
-                    debconf-apt-progress -- sudo apt -y install cd-discid cdparanoia flac lame normalize-audio ruby-gnome2 ruby vorbisgain cd-discid ruby-gettext ruby-gtk3 sox cdrdao
+                    debconf-apt-progress -- sudo apt -y install cd-discid cdparanoia flac lame normalize-audio ruby-gnome2 ruby vorbisgain cd-discid ruby-gettext ruby-gtk3 sox cdrdao make ruby
                     #Download latest from source
-                    git clone https://github.com/bleskodev/rubyripper 2>/dev/null
+                    git clone https://github.com/bleskodev/rubyripper
                     cd rubyripper 
                     #Build from source, install to system.
-                    ./configure --enable-lang-all --enable-gtk3 --enable-cli --prefix=/usr 2>/dev/null
-                    make install -s 2>/dev/null
+                    ./configure --enable-lang-all --enable-gtk3 --enable-cli --prefix=/usr 
+                    make install -s
                     if [[ -f /usr/bin/rrip_cli && -f /usr/bin/rrip_gui ]]; then
                         printf "${GREEN}RubyRipper: ${NC}scripts detected! Installation complete.\n"
                     else
@@ -675,7 +699,7 @@ installers() {
                     wget -q -O stacer.deb https://github.com/oguzhaninan/Stacer/releases/download/v1.1.0/stacer_1.1.0_amd64.deb
                     debconf-apt-progress -- apt-get install -y ./stacer.deb                    
                     if [ -f "/usr/bin/stacer" ]; then
-                       printf "${GREEN}Success: ${NC}Microsoft Skype installation complete.\n"
+                       printf "${GREEN}Success: ${NC}'Stacer installation complete.\n"
                     fi
                     fi
                 #Done

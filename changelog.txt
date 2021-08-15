@@ -1,0 +1,10 @@
+Changelog:
+
+15-08-2021: 0.5.2:
+- Updated DeadBeef to 1.8.8
+- Chrome: Fixed: Add manual GPG key installation.
+- Discord: Added 2 packages to fix Discord installation on Debian 11.
+- Update designed and tested OS to Debian 11.
+- Added check if user is running Debian 11.
+- Fixed RubyRipper's make and ruby dependancy need in the apt install portion.
+

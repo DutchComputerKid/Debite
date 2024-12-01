@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# By Quintus Snitjer, built over a LONG time of tweaking and improving server needs.
+# By Quintus, built over a LONG time of tweaking and improving server needs.
+
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.6\033[0m\n"
+echo -en "\033[1;34mVersion: 0.6.1\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
@@ -28,7 +29,7 @@ YELLOW='\033[1m\033[33m'
 MAGENTA='\033[1m\033[35m'
 
 #List of available software
-declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Subsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "RubyRipper" "Pale Moon" "Stacer")
+declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex")
 # Display help first if desired
 if [[ $@ == *"-help"* ]]; then
     printf "${GREEN}Help: ${NC}Debite can either run via dialog, or command line. \n"
@@ -112,7 +113,9 @@ textmenu() { #Test user interface, in case you dont use the command line options
         22 "Google Chrome" off
         23 "XRDP + Sound support" off
         24 "MakeMKV (NOT UNATTENDED)" off
-        25 "Whipper" off)
+        25 "Whipper" off
+        26 "Jellyfin Media Server"
+        27 "Plex Media Server")
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do
@@ -129,7 +132,7 @@ installers() {
     for instll in "$var"; do
         case $instll in
         1)
-        # I think most of these are not needed anymore. But just in case...
+            # I think most of these are not needed anymore. But just in case...
             #DEBIAN_RELEASE=$(cat /etc/*-release 2>/dev/null | grep PRETTY_NAME | awk -F "=" {'print $2'} | awk -F "(" {'print $2'} | awk -F ")" {'print $1'})
             if [ -f "/etc/apt/sources.list.d/nonfree.list" ]; then
                 printf "${MAGENTA}Notice: ${NC}non-free repo has already been installed." && printf "\n"
@@ -569,15 +572,59 @@ installers() {
             cd $cwd
             ;;
         25)
+            printf "${GREEN}Running: ${NC}Whipper... \n"
             if [[ -f /usr/bin/whipper ]]; then
                 printf "${GREEN}Notice: ${NC}Whipper has already been installed." && printf "\n"
             else
                 #Install requiresites
-                debconf-apt-progress -- sudo apt -y install whipper
+                debconf-apt-progress -- apt -y install whipper
                 if [[ -f /usr/bin/whipper ]]; then
                     printf "${GREEN}Whipper: ${NC}main executable detected! Installation complete.\n"
                 else
                     printf "${RED}Notice: ${NC}Could not detect the Whipper executable, something might have gone wrong. \n"
+                fi
+            fi
+            ;;
+        26)
+            printf "${GREEN}Running: ${NC}Jellyfin... \n"
+            if [[ -f /usr/bin/jellyfin ]]; then
+                printf "${GREEN}Notice: ${NC}Jellyfin has already been installed." && printf "\n"
+            else
+                #Install requiresites
+                debconf-apt-progress -- apt -y install extrepo
+                extrepo enable jellyfin 2>/dev/null
+                apt update -qq
+                debconf-apt-progress -- apt -y install jellyfin
+                systemctl daemon-reload 2>/dev/null
+                service jellyfin start 2>/dev/null
+                (service jellyfin status | grep -i 'running') && JFRUN="true" || JFRUN="false"
+                if [ $JFRUN = "true" ]; then
+                    printf "${GREEN}Jellyfin: ${NC}systemd report says running! Installation complete.\n"
+                else
+                    printf "${RED}Notice: ${NC}Could not detect the Jellyfin service 'running' output, better check that out later! \n"
+                fi
+            fi
+            ;;
+        27)
+            printf "${GREEN}Running: ${NC}Plex... \n"
+            if [[ -f "/usr/lib/plexmediaserver/Plex Media Scanner" ]]; then
+                printf "${GREEN}Notice: ${NC}Plex has already been installed." && printf "\n"
+            else
+                cd $scriptdl
+                #Does not seem like Plex has an easy way to get updated versions so this will do for now...
+                printf "${GREEN}Notice: ${NC}Downloading, might take a while..." && printf "\n"
+                wget -q -O plex.deb "https://downloads.plex.tv/plex-media-server-new/1.41.2.9200-c6bbc1b53/debian/plexmediaserver_1.41.2.9200-c6bbc1b53_amd64.deb" 2>/dev/null
+                #Install the DEB itself.
+                dpkg --force-confold --force-confdef -i plex.deb &>/dev/null
+                #Just in case, check for and fix missing libraries
+                debconf-apt-progress -- apt install -y --fix-broken -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" 2>/dev/null
+                #Return to script
+                cd $cwd
+                (service plexmediaserver status | grep -i 'running') && PXRUN="true" || PXRUN="false"
+                if [ $PXRUN = "true" ]; then
+                    printf "${GREEN}Plex: ${NC}systemd report says running! Installation complete.\n"
+                else
+                    printf "${RED}Notice: ${NC}Could not detect the Jellyfin service 'running' output, better check that out later! \n"
                 fi
             fi
             ;;

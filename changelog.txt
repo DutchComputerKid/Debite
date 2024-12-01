@@ -20,3 +20,7 @@ Changelog:
 - Replaced RubyRipper with Whipper
 - Removed Pale Moon as it is no longer in the repo
 - Removed Stacer as it is abandoned.
+
+0.6.1:
+- Fixed command line only application list
+- Add Jellyfin (repo) & Plex (Hardcoded)

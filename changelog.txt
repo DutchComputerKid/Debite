@@ -8,3 +8,15 @@ Changelog:
 - Added check if user is running Debian 11.
 - Fixed RubyRipper's make and ruby dependancy need in the apt install portion.
 
+01-12-2024: 0.6:
+- Update WineHQ installer
+- Removed no longer needed workarounds on Discord installer
+- Replaced Subsonic with Airsonic (kagemomiji branch)
+- Updated DeadBeef to 1.9.6
+- Updated Tor Browser installer
+- Removed Skype & Teams, but plans to replace them with alternatives.
+- XRDP installer removed, see mentioned website in script for better ones.
+- Updated MakeMKV to 1.17.8
+- Replaced RubyRipper with Whipper
+- Removed Pale Moon as it is no longer in the repo
+- Removed Stacer as it is abandoned.

@@ -33,23 +33,23 @@ By using this, pick associated number in the list and add it to your commnd line
 * 8 Telegram Desktop
 * 9 Wine32+Wine64
 * 10 Discord
-* 11 Subsonic Music Server
+* 11 Airsonic Music Server
 * 12 KVM+Manager
 * 13 DeaDBeeF Music Player
 * 14 Lutris
 * 15 Minecraft Launcher (Official)
 * 16 LAMP Stack
 * 17 Tor Browser
-* 18 Skype For Linux
-* 19 Microsoft Teams
+* 18 Skype For Linux (discontinued, waiting on replacement) 
+* 19 Microsoft Teams (discontinued, waiting on replacement)
 * 20 TeamViewer
 * 21 Steam
 * 22 Google Chrome
-* 23 XRDP + Sound support (Might, might not work with your DE)
+* 23 XRDP + Sound support (Removed, see mentioned URL for a better script)
 * 24 MakeMKV (NOT UNATTENDED DUE TO EULA)
-* 25 RubyRipper
-* 26 Pale Moon
-* 27 Stacer
+* 25 Whipper
+* 26 Jellyfin
+* 27 Plex
 
 ### Screenshots:
 

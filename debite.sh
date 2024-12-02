@@ -123,7 +123,7 @@ textmenu() { #Test user interface, in case you dont use the command line options
         26 "Jellyfin Media Server" off
         27 "Plex Media Server" off
         28 "Docker" off
-        29 "Pi-Hole (Unattended mode)")
+        29 "Pi-Hole (Unattended mode)" off)
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do

@@ -3,7 +3,7 @@
 # By Quintus, built over a LONG time of tweaking and improving server needs.
 
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.6.2\033[0m\n"
+echo -en "\033[1;34mVersion: 0.6.2.1\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
@@ -29,7 +29,7 @@ YELLOW='\033[1m\033[33m'
 MAGENTA='\033[1m\033[35m'
 
 #List of available software
-declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Skype For Linux" "Microsoft Teams" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex")
+declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Zoom Workplace for Linux" "Slack for Linux" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex")
 # Display help first if desired
 if [[ $@ == *"-help"* ]]; then
     printf "${GREEN}Help: ${NC}Debite can either run via dialog, or command line. \n"
@@ -112,16 +112,16 @@ textmenu() { #Test user interface, in case you dont use the command line options
         15 "Minecraft Launcher (Official)" off
         16 "LAMP Stack" off
         17 "Tor Browser" off
-        18 "Skype For Linux" off
-        19 "Microsoft Teams" off
+        18 "Zoom Workplace for Linux" off
+        19 "Slack for Linux" off
         20 "TeamViewer" off
         21 "Steam" off
         22 "Google Chrome" off
         23 "XRDP + Sound support" off
         24 "MakeMKV (NOT UNATTENDED)" off
         25 "Whipper" off
-        26 "Jellyfin Media Server"
-        27 "Plex Media Server")
+        26 "Jellyfin Media Server" off
+        27 "Plex Media Server" off)
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do
@@ -472,14 +472,40 @@ installers() {
             fi
             ;;
         18)
-            printf "${GREEN}Running: ${NC}SkypeForLinux\n"
-            printf "${RED}Notice: ${NC}SkypeForLinux is dead, what would you want to see here instead?\n"
-            #Done
+            #Check if the required bin has been installed already or is located.
+            if [ -f "/usr/bin/zoom" ]; then
+                printf "${GREEN}Notice: ${NC}Zoom Workplace has already been installed." && printf "\n"
+            else
+                printf "${GREEN}Running: ${NC}Zoom Workplace for Linux (DEB)\n"
+                cd $scriptdl
+                wget -q -O zoom.deb https://zoom.us/client/6.2.11.5069/zoom_amd64.deb 2>/dev/null
+                debconf-apt-progress -- apt install -y --install-recommends ./zoom.deb
+                cd $cwd
+                #Then, see if it exists again and if so, give feedback.
+                if [ -f "/usr/bin/zoom" ]; then
+                    printf "${GREEN}Success: ${NC}Ziom Workplace installation complete.\n"
+                else
+                    printf "${RED} Notice: ${NC}Could not detect the Slack binary, something went wrong!.\n"
+                fi
+            fi
             ;;
         19)
-            #Microsoft teams
-            printf "${GREEN}Running: ${NC}Microsoft Teams for Linux\n"
-            printf "${RED}Notice: ${NC}Microsoft Teams for Linux is replaced by its web version, see https://blogs.ed.ac.uk/sopa-scientific-computing/2023/01/12/microsoft-teams-for-linux-changes/\n"
+            #Check if the required bin has been installed already or is located.
+            if [ -f "/usr/bin/slack" ]; then
+                printf "${GREEN}Notice: ${NC}Slack has already been installed." && printf "\n"
+            else
+                printf "${GREEN}Running: ${NC}Slack for Linux (DEB)\n"
+                cd $scriptdl
+                wget -q -O slack.deb https://downloads.slack-edge.com/desktop-releases/linux/x64/4.41.98/slack-desktop-4.41.98-amd64.deb 2>/dev/null
+                dpkg --force-confold --force-confdef -i slack.deb &>/dev/null
+                cd $cwd
+                #Then, see if it exists again and if so, give feedback.
+                if [ -f "/usr/bin/slack" ]; then
+                    printf "${GREEN}Success: ${NC}Slack installation complete.\n"
+                else
+                    printf "${RED} Notice: ${NC}Could not detect the Slack binary, something went wrong!.\n"
+                fi
+            fi
             ;;
         20)
             #TeamViewer Installer

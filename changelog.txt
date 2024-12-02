@@ -26,3 +26,5 @@ Changelog:
 - Add Jellyfin (repo) & Plex (Hardcoded)
 02-12-2024: 0.6.2:
 - Reworked and reordered the Airsonic installer to actually account for file placement order, user creation and java presence.
+02-12-2024: 0.6.2.1:
+- Replaced Skype with Zoom and Teams with Slack. (hardcoded, sadly)

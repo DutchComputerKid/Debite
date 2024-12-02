@@ -3,7 +3,7 @@
 # By Quintus, built over a LONG time of tweaking and improving server needs.
 
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.6.1\033[0m\n"
+echo -en "\033[1;34mVersion: 0.6.2\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
@@ -62,6 +62,12 @@ if [ ! -e /usr/bin/gpg ]; then
     clear
     echo -e "Installing gpg to allow for keys..."
     apt -qqy install gpg >/dev/null 2>&1
+fi
+
+if [ ! -e /usr/bin/jq ]; then
+    clear
+    echo -e "Installing jq to read JSON..."
+    apt -qqy install jq >/dev/null 2>&1
 fi
 
 # Set up a working directory
@@ -280,30 +286,47 @@ installers() {
             if [ -f "/var/airsonic/airsonic.war" ]; then
                 printf "${GREEN}Notice: ${NC}Airsonic has already been installed." && printf "\n"
             else
+                if [ -e "/usr/bin/java" ]; then
+                    printf "${MAGENTA}Info: ${NC}Adding java...\n"
+                    debconf-apt-progress -- apt install -y --install-recommends openjdk-17-jdk
+                fi
+                # systemd based installation:
                 printf "${GREEN}Running: ${NC}Airsonic Music Server installation.\n"
                 build=$(curl -s 'https://api.github.com/repos/kagemomiji/airsonic-advanced/releases/latest' | jq '.assets[0]' | jq '.browser_download_url' -r)
                 version=$(curl -s 'https://api.github.com/repos/kagemomiji/airsonic-advanced/releases/latest' | jq '.tag_name' -r)
                 printf "${MAGENTA}Info: ${NC}Downloading Airsonic $version..." && printf "\n"
                 wget -q $build -O $scriptdl/airsonic.war
+                # Add default user or it will not start.
+                adduser --disabled-password --gecos "" airsonic --comment "Airsonic Server"
                 if [ -f "$scriptdl/airsonic.war" ]; then # Firstly see if the deb file downloaded.
+                    # Proceed setting up variables and config files.
                     mkdir /var/airsonic
-                    sudo chown -R $USER:$GROUP /var/airsonic/
+                    sudo chown -R airsonic:airsonic /var/airsonic/
                     wget -q https://raw.githubusercontent.com/airsonic/airsonic/master/contrib/airsonic.service -O /etc/systemd/system/airsonic.service
                     systemctl daemon-reload
-                    systemctl start airsonic.service
-                    systemctl enable airsonic.service
                     wget -q https://raw.githubusercontent.com/airsonic/airsonic/master/contrib/airsonic-systemd-env -O /etc/default/airsonic
                     mv "$scriptdl/airsonic.war" "/var/airsonic/airsonic.war"
+                    systemctl start airsonic.service
+                    systemctl enable airsonic.service
                     if [ -f "/var/airsonic/airsonic.war" ]; then # Firstly see if the deb file downloaded.
                         minimumsize=851                          # one byte smaller then the actual default file to trigger the if test correctly.
                         actualsize=$(wc -c <"/etc/default/airsonic")
                         if [ $actualsize -ge $minimumsize ]; then # After install, check the configuration files that should have been made.
+                            (service airsonic status | grep -i 'running') && JFRUN="true" || JFRUN="false"
+                            if [ $JFRUN = "true" ]; then
+                                printf "${GREEN}Airsonic: ${NC}systemd report says running! Installation complete.\n"
+                                printf "${MAGENTA}Info: ${NC}Use 'systemctl start airsonic' and open a web browser at localhost:8080 or your server's IP to get started..." && printf "\n"
+                            else
+                                # The output expected once airsonic started is not found
+                                printf "${RED}Notice: ${NC}Could not detect the Airsonic service 'running' output, better check that out later! \n"
+                            fi
                             printf "${GREEN}Success: ${NC}Airsonic installation complete.\n "
-                            printf "${MAGENTA}Info: ${NC}Use 'systemctl start airsonic' and open a web browser at localhost:8080 or your server's IP to get started..." && printf "\n"
                         else
-                            printf "${RED}Notice: ${NC}The configuration file for Subsonic seems smaller then normal, you might want to check it.\n"
+                            # The service file was skipped because the configuartion file does not seem right.
+                            printf "${RED}Notice: ${NC}The configuration file for Airsonic seems smaller then normal, you might want to check it.\n"
                         fi
                     else
+                        # Other catch-all
                         printf "${RED}Notice: ${NC}The configuration file for Airsonic seems smaller then normal, you might want to check it.\n" && exit fi
                     fi
                 else

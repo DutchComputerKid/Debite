@@ -21,6 +21,8 @@ Changelog:
 - Removed Pale Moon as it is no longer in the repo
 - Removed Stacer as it is abandoned.
 
-0.6.1:
+02-12-2024: 0.6.1:
 - Fixed command line only application list
 - Add Jellyfin (repo) & Plex (Hardcoded)
+02-12-2024: 0.6.2:
+- Reworked and reordered the Airsonic installer to actually account for file placement order, user creation and java presence.

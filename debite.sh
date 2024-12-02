@@ -297,11 +297,11 @@ installers() {
                 printf "${MAGENTA}Info: ${NC}Downloading Airsonic $version..." && printf "\n"
                 wget -q $build -O $scriptdl/airsonic.war
                 # Add default user or it will not start.
-                adduser --disabled-password --gecos "" airsonic --comment "Airsonic Server"
+                adduser --disabled-password --gecos "" airsonic --comment "Airsonic Server" --quiet
                 if [ -f "$scriptdl/airsonic.war" ]; then # Firstly see if the deb file downloaded.
                     # Proceed setting up variables and config files.
-                    mkdir /var/airsonic
-                    sudo chown -R airsonic:airsonic /var/airsonic/
+                    mkdir /var/airsonic 2>/dev/null
+                    chown -R airsonic:airsonic /var/airsonic/
                     wget -q https://raw.githubusercontent.com/airsonic/airsonic/master/contrib/airsonic.service -O /etc/systemd/system/airsonic.service
                     systemctl daemon-reload
                     wget -q https://raw.githubusercontent.com/airsonic/airsonic/master/contrib/airsonic-systemd-env -O /etc/default/airsonic
@@ -315,7 +315,7 @@ installers() {
                             (service airsonic status | grep -i 'running') && JFRUN="true" || JFRUN="false"
                             if [ $JFRUN = "true" ]; then
                                 printf "${GREEN}Airsonic: ${NC}systemd report says running! Installation complete.\n"
-                                printf "${MAGENTA}Info: ${NC}Use 'systemctl start airsonic' and open a web browser at localhost:8080 or your server's IP to get started..." && printf "\n"
+                                printf "${MAGENTA}Info: ${NC}Use 'systemctl status airsonic' if nothing is at localhost:8080 or your server's IP..." && printf "\n"
                             else
                                 # The output expected once airsonic started is not found
                                 printf "${RED}Notice: ${NC}Could not detect the Airsonic service 'running' output, better check that out later! \n"

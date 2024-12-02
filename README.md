@@ -50,6 +50,8 @@ By using this, pick associated number in the list and add it to your commnd line
 * 25 Whipper
 * 26 Jellyfin
 * 27 Plex
+* 28 Docker
+* 29 Pi-Hole (Preconfiguration required)
 
 ### Screenshots:
 

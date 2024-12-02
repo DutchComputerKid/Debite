@@ -3,7 +3,7 @@
 # By Quintus, built over a LONG time of tweaking and improving server needs.
 
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.6.2.1\033[0m\n"
+echo -en "\033[1;34mVersion: 0.6.3\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
@@ -11,7 +11,7 @@ if [[ $EUID -ne 0 ]]; then
     exit
 fi
 
-#Check if the user is running Debian 11, if so continue.
+#Check if the user is running Debian 12, if so, continue.
 VERSION=$(sed 's/\..*//' /etc/debian_version)
 if [[ $VERSION != *"12"* ]]; then
     echo "This script is purely designed for Debian 12!"
@@ -29,7 +29,7 @@ YELLOW='\033[1m\033[33m'
 MAGENTA='\033[1m\033[35m'
 
 #List of available software
-declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Zoom Workplace for Linux" "Slack for Linux" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex")
+declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Zoom Workplace for Linux" "Slack for Linux" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex" "Docker" "Pi-Hole (Unattended mode)")
 # Display help first if desired
 if [[ $@ == *"-help"* ]]; then
     printf "${GREEN}Help: ${NC}Debite can either run via dialog, or command line. \n"
@@ -66,7 +66,7 @@ fi
 
 if [ ! -e /usr/bin/jq ]; then
     clear
-    echo -e "Installing jq to read JSON..."
+    echo -e "Installing jq to read JSON input from GitHub, etc..."
     apt -qqy install jq >/dev/null 2>&1
 fi
 
@@ -121,7 +121,9 @@ textmenu() { #Test user interface, in case you dont use the command line options
         24 "MakeMKV (NOT UNATTENDED)" off
         25 "Whipper" off
         26 "Jellyfin Media Server" off
-        27 "Plex Media Server" off)
+        27 "Plex Media Server" off
+        28 "Docker" off
+        29 "Pi-Hole (Unattended mode)")
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do
@@ -131,6 +133,37 @@ textmenu() { #Test user interface, in case you dont use the command line options
         esac
     done
     ranfromtextmode="true"
+}
+
+docker() {
+    if [ -f "/usr/bin/docker" ]; then
+        printf "${GREEN}Notice: ${NC}Docker has already been installed." && printf "\n"
+    else
+        printf "${GREEN}Running: ${NC}Docker installer\n"
+        # Because multiple software solutions might require this I made it a function instead.
+        cd $scriptdl
+        # Add Docker's official GPG key:
+        debconf-apt-progress -- apt -y install ca-certificates curl
+        install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+        chmod a+r /etc/apt/keyrings/docker.asc
+        # Add the repository to Apt sources:
+        echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" |
+            sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+        apt update -qq
+        # Install
+        debconf-apt-progress -- apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        # Check if the test docker runs successfully, then remove it.
+        (sudo docker run hello-world | grep -i 'Hello from Docker!') && DOCKERSUCCESS="true" || DOCKERSUCCESS="false"
+        if [ $DOCKERSUCCESS = "true" ]; then
+            printf "${GREEN}Docker: ${NC}Docker hello world says hello! Installation complete.\n"
+        else
+            printf "${RED}Notice: ${NC}Could not grab docker's hello world, better check that out later! \n"
+        fi
+        cd $cwd
+    fi
 }
 
 installers() {
@@ -483,7 +516,7 @@ installers() {
                 cd $cwd
                 #Then, see if it exists again and if so, give feedback.
                 if [ -f "/usr/bin/zoom" ]; then
-                    printf "${GREEN}Success: ${NC}Ziom Workplace installation complete.\n"
+                    printf "${GREEN}Success: ${NC}Zoom Workplace installation complete.\n"
                 else
                     printf "${RED} Notice: ${NC}Could not detect the Slack binary, something went wrong!.\n"
                 fi
@@ -673,8 +706,31 @@ installers() {
                 if [ $PXRUN = "true" ]; then
                     printf "${GREEN}Plex: ${NC}systemd report says running! Installation complete.\n"
                 else
-                    printf "${RED}Notice: ${NC}Could not detect the Jellyfin service 'running' output, better check that out later! \n"
+                    printf "${RED}Notice: ${NC}Could not detect the Plex service 'running' output, better check that out later! \n"
                 fi
+            fi
+            ;;
+        28)
+            # Basic docker install was put into a function for future use.
+            docker
+            ;;
+        29)
+            printf "${GREEN}Running: ${NC}Pi-Hole... \n"
+            if [[ -f "/etc/pihole/setupVars.conf" ]]; then
+                if [[ -f "/usr/local/bin/pihole" ]]; then
+                    printf "${GREEN}Notice: ${NC}Pi-Hole has already been installed." && printf "\n"
+                else
+                    cd $scriptdl
+                    curl -L https://install.pi-hole.net | bash /dev/stdin --unattended
+                    cd $cwd
+                    if [[ -f /usr/local/bin/pihole ]]; then
+                        printf "${GREEN}Pi-Hole: ${NC}main executable detected! Installation complete.\n"
+                    else
+                        printf "${RED}Notice: ${NC}Could not detect the pihole configuration executable, something might have gone wrong. \n"
+                    fi
+                fi
+            else
+                printf "${GREEN}Notice: ${NC}Unattended pihole installation requires a config file, see 'https://discourse.pi-hole.net/t/what-is-setupvars-conf-and-how-do-i-use-it/3533/1'" && printf "\n"
             fi
             ;;
         esac
@@ -684,6 +740,8 @@ installers() {
 printf "${GREEN}Notice: ${NC}Debite starting...\n"
 #Program start
 echo -e "Updating/checking dependencies to run..."
+apt update -y -qq
+apt upgrade -y -qq
 apt install --no-install-recommends -qq -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" dialog debconf-apt-progress 2>/dev/null
 debconf-apt-progress -- apt install -y -o Dpkg::Options::="--force-confold" -o Dpkg::Options::="--force-confdef" curl git software-properties-common
 #Ready
@@ -701,7 +759,7 @@ else
     #If not, continue.
     #Check if an user is inputting values that exceed the program count, but not if help is found in the arguments.
     for args in ${@//[!0-9]/}; do
-        if [ $args -ge 28 ]; then
+        if [ $args -ge 30 ]; then
             echo "A number in the arguments was greater then the amount of scripted tools or programs. Please check with --help" && printf "\n"
             printf "${MAGENTA}Notice: ${NC} '[: --help: integer expression expected' is a known error, you may ignore it. \n"
             if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n" && exit

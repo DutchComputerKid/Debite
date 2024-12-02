@@ -40,8 +40,8 @@ By using this, pick associated number in the list and add it to your commnd line
 * 15 Minecraft Launcher (Official)
 * 16 LAMP Stack
 * 17 Tor Browser
-* 18 Skype For Linux (discontinued, waiting on replacement) 
-* 19 Microsoft Teams (discontinued, waiting on replacement)
+* 18 Zoom Workplace for Linux
+* 19 Slack for Linux
 * 20 TeamViewer
 * 21 Steam
 * 22 Google Chrome

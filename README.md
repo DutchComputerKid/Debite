@@ -52,6 +52,8 @@ By using this, pick associated number in the list and add it to your commnd line
 * 27 Plex
 * 28 Docker
 * 29 Pi-Hole (Preconfiguration required)
+* 30 Signal Desktop
+* 31 Virtualbox
 
 ### Screenshots:
 

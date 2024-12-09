@@ -32,3 +32,7 @@ Changelog:
 - Typos and oversights
 - Added Docker capability in a function for easy access.
 - Added Pi-Hole (Preconfiguration required with /etc/pihole/setupVars.conf, see mentioned URL.)
+
+09-12-2024: 0.6.4
+- Add Signal Desktop and VirtualBox
+- Add notice for using sudo, or rather to use it

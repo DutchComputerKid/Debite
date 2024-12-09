@@ -3,12 +3,19 @@
 # By Quintus, built over a LONG time of tweaking and improving server needs.
 
 echo -e "\033[1;34mDebite\033[0m"
-echo -en "\033[1;34mVersion: 0.6.3\033[0m\n"
+echo -en "\033[1;34mVersion: 0.6.4\033[0m\n"
 
 if [[ $EUID -ne 0 ]]; then
     echo "This script must be run as root"
     if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n"
     exit
+else
+    if [[ -z "$SUDO_COMMAND" ]]; then
+        echo 'Please also use sudo. Using root without sudo or better yet, your own user tends to cause issues sometimes.'
+        if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n"
+        exit
+    fi
+    # All checks passed. Do not exit this time.
 fi
 
 #Check if the user is running Debian 12, if so, continue.
@@ -29,7 +36,7 @@ YELLOW='\033[1m\033[33m'
 MAGENTA='\033[1m\033[35m'
 
 #List of available software
-declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Zoom Workplace for Linux" "Slack for Linux" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex" "Docker" "Pi-Hole (Unattended mode)")
+declare SoftwareArray=("Setup nonfree and contrib repositories" "Various console-oriented tools" "LXDE Setup" "LXQT Setup" "GUI-Required Tools" "nVidia Driver (latest from repo's)" "Visual Studio Code" "Telegram Desktop" "Wine32+Wine64" "Discord" "Airsonic Music Server" "KVM+Manager" "DeaDBeeF Music Player" "Lutris" "Minecraft Launcher (Official)" "LAMP Stack" "Tor Browser" "Zoom Workplace for Linux" "Slack for Linux" "TeamViewer" "Steam" "Google Chrome" "XRDP + Sound support" "MakeMKV (NOT UNATTENDED)" "Whipper" "Jellyfin Media Server" "Plex" "Docker" "Pi-Hole (Unattended mode)" "Signal Desktop" "Virtualbox")
 # Display help first if desired
 if [[ $@ == *"-help"* ]]; then
     printf "${GREEN}Help: ${NC}Debite can either run via dialog, or command line. \n"
@@ -123,7 +130,9 @@ textmenu() { #Test user interface, in case you dont use the command line options
         26 "Jellyfin Media Server" off
         27 "Plex Media Server" off
         28 "Docker" off
-        29 "Pi-Hole (Unattended mode)" off)
+        29 "Pi-Hole (Unattended mode)" off
+        30 "Signal Desktop" off
+        31 "Virtualbox" off)
     choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
     clear
     for var in $choices; do
@@ -721,7 +730,7 @@ installers() {
                     printf "${GREEN}Notice: ${NC}Pi-Hole has already been installed." && printf "\n"
                 else
                     cd $scriptdl
-                    curl -L https://install.pi-hole.net | bash /dev/stdin --unattended
+                    curl -L https://install.pi-hole.net | bash /dev/stdin --unattended #For whatever reason this works but pulling from github does not.
                     cd $cwd
                     if [[ -f /usr/local/bin/pihole ]]; then
                         printf "${GREEN}Pi-Hole: ${NC}main executable detected! Installation complete.\n"
@@ -731,6 +740,57 @@ installers() {
                 fi
             else
                 printf "${GREEN}Notice: ${NC}Unattended pihole installation requires a config file, see 'https://discourse.pi-hole.net/t/what-is-setupvars-conf-and-how-do-i-use-it/3533/1'" && printf "\n"
+            fi
+            ;;
+        30)
+            printf "${GREEN}Running: ${NC}Signal Desktop... \n"
+            if [[ -f "/usr/bin/signal-desktop" ]]; then
+                printf "${GREEN}Notice: ${NC}Signal has already been installed." && printf "\n"
+            else
+                cd $scriptdl
+                # Part of this are the official commands.
+                # 1. Install our official public software signing key:
+                wget -q -O- https://updates.signal.org/desktop/apt/keys.asc | gpg -q --dearmor >signal-desktop-keyring.gpg
+                cat signal-desktop-keyring.gpg | tee /usr/share/keyrings/signal-desktop-keyring.gpg >/dev/null
+
+                # 2. Add our repository to your list of repositories:
+                echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' |
+                    tee /etc/apt/sources.list.d/signal-xenial.list
+
+                # 3. Update your package database and install Signal:
+                apt update -qq && debconf-apt-progress -- apt install signal-desktop
+                cd $cwd
+                if [[ -f "/usr/bin/signal-desktop" ]]; then
+                    printf "${GREEN}Signal: ${NC}main executable detected! Installation complete.\n"
+                else
+                    printf "${RED}Notice: ${NC}Could not detect the Signal client, something might have gone wrong. \n"
+                fi
+            fi
+            ;;
+        31)
+            # VirtualBox
+            printf "${GREEN}Running: ${NC}Virtualbox... \n"
+            if [[ -f "/usr/bin/virtualbox" ]]; then
+                printf "${GREEN}Notice: ${NC}Virtualbox has already been installed." && printf "\n"
+            else
+                cd $scriptdl
+                if [[ -f "/etc/apt/sources.list.d/virtualbox.list" ]]; then
+                    printf "${GREEN}Notice: ${NC}Virtualbox's repo has already been installed." && printf "\n"
+                else
+                    # 1. Install our official public software signing key:
+                    wget -q -O- https://www.virtualbox.org/download/oracle_vbox_2016.asc | gpg -q --yes --output /usr/share/keyrings/oracle-virtualbox-2016.gpg --dearmor
+
+                    # 2. Add our repository to your list of repositories:
+                    echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/oracle-virtualbox-2016.gpg] https://download.virtualbox.org/virtualbox/debian bookworm contrib' |
+                        tee /etc/apt/sources.list.d/virtualbox.list
+                fi
+                apt update -qq && debconf-apt-progress -- apt -y install virtualbox-7.1
+                cd $cwd
+                if [[ -f "/usr/bin/virtualbox" ]]; then
+                    printf "${GREEN}Virtualbox: ${NC}main executable detected! Installation complete.\n"
+                else
+                    printf "${RED}Notice: ${NC}Could not detect the Virtualbox client, something might have gone wrong. \n"
+                fi
             fi
             ;;
         esac
@@ -759,7 +819,7 @@ else
     #If not, continue.
     #Check if an user is inputting values that exceed the program count, but not if help is found in the arguments.
     for args in ${@//[!0-9]/}; do
-        if [ $args -ge 30 ]; then
+        if [ $args -ge 32 ]; then # 1 more than the actual list
             echo "A number in the arguments was greater then the amount of scripted tools or programs. Please check with --help" && printf "\n"
             printf "${MAGENTA}Notice: ${NC} '[: --help: integer expression expected' is a known error, you may ignore it. \n"
             if [ -d $scriptdl ]; then rm -rf $scriptdl; fi && unset workdir && printf "${GREEN}Debite: ${NC}Script ended!\n" && exit
